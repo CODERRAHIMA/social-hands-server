@@ -3,10 +3,10 @@ import cors from "cors";
 import { MongoClient } from "mongodb";
 import 'dotenv/config'
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 8000;
 
 const app = express();
-// app.use(cors());
+app.use(cors());
 
 app.use(express.json());
 
@@ -22,14 +22,20 @@ export async function connectToMongoDB() {
   }
 }
 
-const db = await connectToMongoDB();
+const mongoClient = await connectToMongoDB();
+const db = mongoClient.db("socialHands");
+const eventsCollection = db.collection("events");
+
 
 app.get("/", (req, res) => {
   res.send("Server is running");
 });
 
-app.get("/test", (req, res) => {
-  res.json({ message: "hello world" });
+app.post("/add-event", async (req, res) => {
+  const data = req.body;
+  const result = await eventsCollection.insertOne(data);
+  console.log(result);
+  res.send(result);
 });
 
 app.listen(port, () => {
