@@ -38,6 +38,11 @@ app.post("/add-event", async (req, res) => {
   res.send(result);
 });
 
+app.get("/upcoming-events", async (req, res) => {
+  const result = await eventsCollection.find({}).toArray();
+  res.send(result);
+});
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
