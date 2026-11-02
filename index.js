@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { MongoClient } from "mongodb";
+import { MongoClient, ObjectId } from "mongodb";
 import 'dotenv/config'
 
 const port = process.env.PORT || 8000;
@@ -40,6 +40,23 @@ app.post("/add-event", async (req, res) => {
 
 app.get("/upcoming-events", async (req, res) => {
   const result = await eventsCollection.find({}).toArray();
+  res.send(result);
+});
+
+app.get("/upcoming-events/:id", async (req, res) => {
+  const id = req.params.id;
+  const result = await eventsCollection.findOne({ _id: new ObjectId(id) });
+  res.send(result);
+});
+
+// edit event
+app.patch("/upcoming-events/:id", async (req, res) => {
+  const id = req.params.id;
+  const updatedData = req.body;
+  const result = await eventsCollection.updateOne(
+    { _id: new ObjectId(id) },
+    { $set: updatedData }
+  );
   res.send(result);
 });
 
