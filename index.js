@@ -60,6 +60,13 @@ app.patch("/upcoming-events/:id", async (req, res) => {
   res.send(result);
 });
 
+// delete event
+app.delete("/upcoming-events/:id", async (req, res) => {
+  const id = req.params.id;
+  const result = await eventsCollection.deleteOne({ _id: new ObjectId(id) });
+  res.send(result);
+});
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
