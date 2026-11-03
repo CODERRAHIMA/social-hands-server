@@ -78,6 +78,15 @@ app.post("/joined-events", async (req, res) => {
   res.send(result);
 });
 
+// read joined events by emails
+app.get("/joined-events/:email", async (req, res) => {
+  const email = req.params.email;
+  const result = await joinedEventsCollection.find({ email: email }).toArray();
+  res.send(result);
+});
+
+
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
