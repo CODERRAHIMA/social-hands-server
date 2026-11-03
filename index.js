@@ -25,12 +25,14 @@ export async function connectToMongoDB() {
 const mongoClient = await connectToMongoDB();
 const db = mongoClient.db("socialHands");
 const eventsCollection = db.collection("events");
+const joinedEventsCollection = db.collection("joinedEvents");
 
 
 app.get("/", (req, res) => {
   res.send("Server is running");
 });
 
+// create event
 app.post("/add-event", async (req, res) => {
   const data = req.body;
   const result = await eventsCollection.insertOne(data);
@@ -38,11 +40,13 @@ app.post("/add-event", async (req, res) => {
   res.send(result);
 });
 
+// read events
 app.get("/upcoming-events", async (req, res) => {
   const result = await eventsCollection.find({}).toArray();
   res.send(result);
 });
 
+// read single event
 app.get("/upcoming-events/:id", async (req, res) => {
   const id = req.params.id;
   const result = await eventsCollection.findOne({ _id: new ObjectId(id) });
@@ -64,6 +68,13 @@ app.patch("/upcoming-events/:id", async (req, res) => {
 app.delete("/upcoming-events/:id", async (req, res) => {
   const id = req.params.id;
   const result = await eventsCollection.deleteOne({ _id: new ObjectId(id) });
+  res.send(result);
+});
+
+// join event 
+app.post("/joined-events", async (req, res) => {
+  const data = req.body;
+  const result = await joinedEventsCollection.insertOne(data);
   res.send(result);
 });
 
