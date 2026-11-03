@@ -85,7 +85,12 @@ app.get("/joined-events/:email", async (req, res) => {
   res.send(result);
 });
 
-
+// read managed events by email
+app.get("/manage-events/:email", async (req, res) => {
+  const email = req.params.email;
+  const result = await eventsCollection.find({ creatorEmail: email }).toArray();
+  res.send(result);
+});
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
