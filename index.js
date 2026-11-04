@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { MongoClient, ObjectId } from "mongodb";
-import 'dotenv/config'
+import "dotenv/config";
 
 const port = process.env.PORT || 8000;
 
@@ -27,7 +27,6 @@ const db = mongoClient.db("socialHands");
 const eventsCollection = db.collection("events");
 const joinedEventsCollection = db.collection("joinedEvents");
 
-
 app.get("/", (req, res) => {
   res.send("Server is running");
 });
@@ -42,7 +41,14 @@ app.post("/add-event", async (req, res) => {
 
 // read events
 app.get("/upcoming-events", async (req, res) => {
-  const result = await eventsCollection.find({}).toArray();
+  const now = new Date();
+  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+  const result = await eventsCollection
+    .find({ eventDate: { $gt: today } })
+    .sort({ eventDate: 1 })
+    .toArray();
+
   res.send(result);
 });
 
@@ -65,7 +71,7 @@ app.patch("/upcoming-events/:id", async (req, res) => {
   const updatedData = req.body;
   const result = await eventsCollection.updateOne(
     { _id: new ObjectId(id) },
-    { $set: updatedData }
+    { $set: updatedData },
   );
   res.send(result);
 });
@@ -77,14 +83,14 @@ app.delete("/upcoming-events/:id", async (req, res) => {
   res.send(result);
 });
 
-// join on event 
+// join on event
 app.post("/joined-events", async (req, res) => {
   const data = req.body;
-  const {_id, ...eventDataWithoutId} = data;
+  const { _id, ...eventDataWithoutId } = data;
   const finalDataToSave = {
     ...eventDataWithoutId,
-    eventId: new ObjectId(_id)
-  }
+    eventId: new ObjectId(_id),
+  };
   const result = await joinedEventsCollection.insertOne(finalDataToSave);
   res.send(result);
 });
