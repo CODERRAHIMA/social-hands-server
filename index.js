@@ -85,14 +85,19 @@ app.delete("/upcoming-events/:id", async (req, res) => {
 
 // join on event
 app.post("/joined-events", async (req, res) => {
-  const data = req.body;
-  const { _id, ...eventDataWithoutId } = data;
-  const finalDataToSave = {
-    ...eventDataWithoutId,
-    eventId: new ObjectId(_id),
-  };
-  const result = await joinedEventsCollection.insertOne(finalDataToSave);
-  res.send(result);
+  const { _id, email, username, userimage, ...eventDataWithoutId } = req.body;
+  const targetEventId = new ObjectId(_id);
+
+  const existingJoin = await joinedEventsCollection.findOne({ email, eventId: targetEventId });
+
+  if (existingJoin) {
+    await joinedEventsCollection.deleteOne({ email, eventId: targetEventId });
+    return res.send({ joined: false, message: "Successfully left the event!" });
+  } else {
+    const finalDataToSave = { username, email, userimage, ...eventDataWithoutId, eventId: targetEventId };
+    await joinedEventsCollection.insertOne(finalDataToSave);
+    return res.send({ joined: true, message: "Successfully joined the event!" });
+  }
 });
 
 // read joined events by emails
