@@ -46,14 +46,20 @@ app.get("/upcoming-events", async (req, res) => {
   res.send(result);
 });
 
-// read single event
+// read recent 6 events
+app.get("/recent-events", async (req, res) => {
+  const result = await eventsCollection.find({}).limit(6).toArray();
+  res.send(result);
+});
+
+// read single event detail
 app.get("/upcoming-events/:id", async (req, res) => {
   const id = req.params.id;
   const result = await eventsCollection.findOne({ _id: new ObjectId(id) });
   res.send(result);
 });
 
-// edit event
+// edit event detail
 app.patch("/upcoming-events/:id", async (req, res) => {
   const id = req.params.id;
   const updatedData = req.body;
@@ -71,10 +77,15 @@ app.delete("/upcoming-events/:id", async (req, res) => {
   res.send(result);
 });
 
-// join event 
+// join on event 
 app.post("/joined-events", async (req, res) => {
   const data = req.body;
-  const result = await joinedEventsCollection.insertOne(data);
+  const {_id, ...eventDataWithoutId} = data;
+  const finalDataToSave = {
+    ...eventDataWithoutId,
+    eventId: new ObjectId(_id)
+  }
+  const result = await joinedEventsCollection.insertOne(finalDataToSave);
   res.send(result);
 });
 
@@ -84,6 +95,13 @@ app.get("/joined-events/:email", async (req, res) => {
   const result = await joinedEventsCollection.find({ email: email }).toArray();
   res.send(result);
 });
+
+// // delete joined event
+// app.delete("/joined-events/:id", async (req, res) => {
+//   const id = req.params.id;
+//   const result = await joinedEventsCollection.deleteOne({ _id: new ObjectId(id) });
+//   res.send(result);
+// });
 
 // read managed events by email
 app.get("/manage-events/:email", async (req, res) => {
