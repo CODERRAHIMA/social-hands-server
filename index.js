@@ -39,7 +39,7 @@ app.post("/add-event", async (req, res) => {
   res.send(result);
 });
 
-// read events
+// read all events
 app.get("/upcoming-events", async (req, res) => {
   const now = new Date();
   const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
@@ -52,7 +52,7 @@ app.get("/upcoming-events", async (req, res) => {
   res.send(result);
 });
 
-// read recent 6 events
+// read recent upcoming 6 events
 app.get("/recent-events", async (req, res) => {
   const result = await eventsCollection.find({}).limit(6).toArray();
   res.send(result);
@@ -98,7 +98,7 @@ app.post("/joined-events", async (req, res) => {
 // read joined events by emails
 app.get("/joined-events/:email", async (req, res) => {
   const email = req.params.email;
-  const result = await joinedEventsCollection.find({ email: email }).toArray();
+  const result = await joinedEventsCollection.find({ email: email }).sort({ eventDate: 1 }).toArray();
   res.send(result);
 });
 
