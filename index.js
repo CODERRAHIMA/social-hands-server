@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { MongoClient, ObjectId } from "mongodb";
 import "dotenv/config";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 
 const port = process.env.PORT || 8000;
 
@@ -27,12 +28,41 @@ const db = mongoClient.db("socialHands");
 const eventsCollection = db.collection("events");
 const joinedEventsCollection = db.collection("joinedEvents");
 
+const verifyToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).send({ message: "Unauthorized access" });
+  }
+
+  const token = authHeader.split(" ")[1];
+  if (!token) {
+    return res.status(401).send({ message: "Unauthorized access" });
+  }
+
+  const JWKS = createRemoteJWKSet(
+    new URL("http://localhost:3000/api/auth/jwks"),
+  );
+
+  try {
+    const { payload } = await jwtVerify(token, JWKS);
+    next();
+  } catch (err) {
+    return res.status(500).send({ message: "Server Error!" });
+  }
+};
+
+
+
+
+
+
 app.get("/", (req, res) => {
   res.send("Server is running");
 });
 
 // create event
-app.post("/add-event", async (req, res) => {
+app.post("/add-event", verifyToken, async (req, res) => {
   const data = req.body;
   const result = await eventsCollection.insertOne(data);
   console.log(result);
@@ -66,7 +96,7 @@ app.get("/upcoming-events/:id", async (req, res) => {
 });
 
 // edit event detail
-app.patch("/upcoming-events/:id", async (req, res) => {
+app.patch("/upcoming-events/:id", verifyToken, async (req, res) => {
   const id = req.params.id;
   const updatedData = req.body;
   const result = await eventsCollection.updateOne(
@@ -88,34 +118,42 @@ app.post("/joined-events", async (req, res) => {
   const { _id, email, username, userimage, ...eventDataWithoutId } = req.body;
   const targetEventId = new ObjectId(_id);
 
-  const existingJoin = await joinedEventsCollection.findOne({ email, eventId: targetEventId });
+  const existingJoin = await joinedEventsCollection.findOne({
+    email,
+    eventId: targetEventId,
+  });
 
   if (existingJoin) {
     await joinedEventsCollection.deleteOne({ email, eventId: targetEventId });
     return res.send({ joined: false, message: "Successfully left the event!" });
   } else {
-    const finalDataToSave = { username, email, userimage, ...eventDataWithoutId, eventId: targetEventId };
+    const finalDataToSave = {
+      username,
+      email,
+      userimage,
+      ...eventDataWithoutId,
+      eventId: targetEventId,
+    };
     await joinedEventsCollection.insertOne(finalDataToSave);
-    return res.send({ joined: true, message: "Successfully joined the event!" });
+    return res.send({
+      joined: true,
+      message: "Successfully joined the event!",
+    });
   }
 });
 
 // read joined events by emails
-app.get("/joined-events/:email", async (req, res) => {
+app.get("/joined-events/:email", verifyToken, async (req, res) => {
   const email = req.params.email;
-  const result = await joinedEventsCollection.find({ email: email }).sort({ eventDate: 1 }).toArray();
+  const result = await joinedEventsCollection
+    .find({ email: email })
+    .sort({ eventDate: 1 })
+    .toArray();
   res.send(result);
 });
 
-// // delete joined event
-// app.delete("/joined-events/:id", async (req, res) => {
-//   const id = req.params.id;
-//   const result = await joinedEventsCollection.deleteOne({ _id: new ObjectId(id) });
-//   res.send(result);
-// });
-
 // read managed events by email
-app.get("/manage-events/:email", async (req, res) => {
+app.get("/manage-events/:email", verifyToken, async (req, res) => {
   const email = req.params.email;
   const result = await eventsCollection.find({ creatorEmail: email }).toArray();
   res.send(result);
