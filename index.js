@@ -41,7 +41,7 @@ const verifyToken = async (req, res, next) => {
   }
 
   const JWKS = createRemoteJWKSet(
-    new URL("http://localhost:3000/api/auth/jwks"),
+    new URL(`${process.env.CLIENT_URL}/api/auth/jwks`),
   );
 
   try {
@@ -51,11 +51,6 @@ const verifyToken = async (req, res, next) => {
     return res.status(500).send({ message: "Server Error!" });
   }
 };
-
-
-
-
-
 
 app.get("/", (req, res) => {
   res.send("Server is running");
@@ -162,3 +157,5 @@ app.get("/manage-events/:email", verifyToken, async (req, res) => {
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });
+
+export default app;
