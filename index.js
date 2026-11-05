@@ -79,7 +79,7 @@ app.get("/upcoming-events", async (req, res) => {
 
 // read recent upcoming 6 events
 app.get("/recent-events", async (req, res) => {
-  const result = await eventsCollection.find({}).limit(6).toArray();
+  const result = await eventsCollection.find({}).sort({ eventDate: 1 }).limit(6).toArray();
   res.send(result);
 });
 
